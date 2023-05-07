@@ -1,5 +1,8 @@
 pipeline {
     agent {label 'slave'}
+     tools {
+            maven 'maven'
+     }
     stages {
         stage('Pull latest code') {
             steps {
@@ -12,6 +15,12 @@ pipeline {
                 sh "mvn clean install"
             }
         }
+
+         stage("Test") {
+                    steps {
+                        sh "mvn test"
+                    }
+                }
     }
     post {
         success {
