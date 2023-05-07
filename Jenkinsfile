@@ -1,3 +1,21 @@
+void sendBuildFailedEmail(){
+if(currentBuild.currentResult!="SUCCESS"){
+    String emailSubject  = "Jenkins-${app_env} backend build #${BUILD_NUMBER} Failed"
+    emailext to: 'mohamedumar931@gmail.com',
+    subject: emailSubject,
+    body: "See build log here - ${BUILD_URL}"
+    }
+}
+
+void sendBuildStatusChangedEmail(){
+    if(currentBuild.currentResult=="SUCCESS"){
+        String emailSubject  = "Jenkins-${app_env} backend build #${BUILD_NUMBER} is now passing"
+        emailext to: 'mohamedumar931@gmail.com',
+        subject: emailSubject,
+        body: "See build log here - ${BUILD_URL}"
+    }
+}
+
 pipeline {
     agent {label 'slave'}
      tools {
@@ -23,8 +41,14 @@ pipeline {
                 }
     }
     post {
-        success {
-            println "Finished Build 1"
+            failure {
+                sendBuildFailedEmail()
+            }
+            changed {
+                sendBuildStatusChangedEmail()
+            }
+            success {
+                println "Finished "
+            }
         }
-    }
 }
