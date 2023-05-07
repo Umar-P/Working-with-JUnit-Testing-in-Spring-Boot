@@ -24,7 +24,7 @@ pipeline {
     }
     post {
         success {
-            println "Finished "
+            println "Finished Build"
         }
     }
 }
