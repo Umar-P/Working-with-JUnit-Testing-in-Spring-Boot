@@ -1,23 +1,8 @@
-void sendBuildFailedEmail(){
-if(currentBuild.currentResult!="SUCCESS"){
-    String emailSubject  = "Jenkins-${app_env} backend build #${BUILD_NUMBER} Failed"
-    emailext to: 'mohamedumar931@gmail.com',
-    subject: emailSubject,
-    body: "See build log here - ${BUILD_URL}"
-    }
-}
-
-void sendBuildStatusChangedEmail(){
-    if(currentBuild.currentResult=="SUCCESS"){
-        String emailSubject  = "Jenkins-${app_env} backend build #${BUILD_NUMBER} is now passing"
-        emailext to: 'mohamedumar931@gmail.com',
-        subject: emailSubject,
-        body: "See build log here - ${BUILD_URL}"
-    }
-}
-
 pipeline {
     agent {label 'slave'}
+    environment {
+    		DOCKERHUB_CREDENTIALS=credentials('docker-cred')
+    	}
      tools {
             maven 'maven'
      }
@@ -28,27 +13,36 @@ pipeline {
             }
         }
 
-        stage("Build") {
+        stage("Install") {
             steps {
                 sh "mvn clean install"
             }
         }
+
+        stage("Build a package") {
+                    steps {
+                        sh "mvn clean package"
+                    }
+                }
 
          stage("Test") {
                     steps {
                         sh "mvn test"
                     }
                 }
+
+         stage('Login To Docker Hub') {
+
+         			steps {
+         				sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+         			}
+         		}
     }
     post {
-            failure {
-                sendBuildFailedEmail()
-            }
-            changed {
-                sendBuildStatusChangedEmail()
-            }
-            success {
-                println "Finished "
-            }
+             always{
+                        mail to: "mohamedumar931@gmail.com",
+                        subject: "jenkins build:${currentBuild.currentResult}: ${env.JOB_NAME}",
+                        body: "${currentBuild.currentResult}: Job ${env.JOB_NAME}\nMore Info can be found here: ${env.BUILD_URL}"
+                    }
         }
 }
